@@ -1,0 +1,154 @@
+{
+  "name": "Shopify Bulk Product Import",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger-manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [100, 300]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "shopify-import",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "trigger-webhook",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [100, 480]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Read CSV from binary data or use test data\nconst items = $input.all();\n\n// If webhook provided a file\nif (items[0]?.binary?.data) {\n  const csvText = Buffer.from(items[0].binary.data.data, 'base64').toString('utf-8');\n  const lines = csvText.split('\\n').filter(l => l.trim());\n  const headers = lines[0].split(',').map(h => h.trim().replace(/^\"|\"$/g, ''));\n  const rows = [];\n  for (let i = 1; i < lines.length; i++) {\n    const vals = lines[i].split(',').map(v => v.trim().replace(/^\"|\"$/g, ''));\n    const row = {};\n    headers.forEach((h, idx) => { row[h] = vals[idx] || ''; });\n    rows.push({ json: row });\n  }\n  return rows;\n}\n\n// Test data (Turkish supplier CSV format)\nreturn [\n  { json: { 'Stok Kodu': 'TXT-001', 'Ürün Adı': 'pamuk yatak ortüsü 1mt', 'Kategori': 'yatak', 'Marka': 'ÖRNEK', 'Fiyat': '250', 'Stok': '15', 'Renk': 'beyaz', 'Boyut': '200x220', 'Malzeme': 'Pamuk' } },\n  { json: { 'Stok Kodu': 'TXT-002', 'Ürün Adı': 'Banyo Havlusu', 'Kategori': 'havlu', 'Marka': 'ÖRNEK', 'Fiyat': '85', 'Stok': '', 'Renk': 'lacivert', 'Boyut': '50x90', 'Malzeme': 'Pamuk' } },\n  { json: { 'Stok Kodu': 'TXT-003', 'Ürün Adı': 'nevresim takimi 2mt', 'Kategori': 'nevresim', 'Marka': '', 'Fiyat': '0', 'Stok': '5', 'Renk': 'kirmizi', 'Boyut': '200x220', 'Malzeme': 'Polyester' } },\n  { json: { 'Stok Kodu': 'TXT-001', 'Ürün Adı': 'pamuk yatak ortüsü 1mt', 'Kategori': 'yatak', 'Marka': 'ÖRNEK', 'Fiyat': '250', 'Stok': '15', 'Renk': 'beyaz', 'Boyut': '200x220', 'Malzeme': 'Pamuk' } }\n];"
+      },
+      "id": "parse-csv",
+      "name": "Parse CSV",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [360, 380]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Map Turkish supplier fields to internal format and validate\nconst FIELD_MAP = {\n  'Stok Kodu': 'sku',\n  'Ürün Adı': 'name',\n  'Kategori': 'category',\n  'Marka': 'brand',\n  'Fiyat': 'price',\n  'Stok': 'stock',\n  'Renk': 'color',\n  'Boyut': 'size',\n  'Malzeme': 'material',\n  'Açıklama': 'extra_info',\n};\n\nconst results = [];\nconst errors = [];\n\nfor (const item of $input.all()) {\n  const raw = item.json;\n  const mapped = {};\n\n  for (const [trKey, enKey] of Object.entries(FIELD_MAP)) {\n    if (raw[trKey] !== undefined) mapped[enKey] = raw[trKey];\n  }\n\n  if (!mapped.sku || !mapped.name) {\n    errors.push({ ...raw, _error: 'SKU veya Ürün Adı eksik' });\n    continue;\n  }\n\n  mapped.price = mapped.price ? parseFloat(mapped.price) : null;\n  mapped.stock = (mapped.stock !== undefined && mapped.stock !== '') ? parseInt(mapped.stock) : null;\n\n  results.push({ json: mapped });\n}\n\nif (errors.length > 0) {\n  const last = results[results.length - 1] || { json: {} };\n  last.json._validation_errors = errors;\n  if (results.length === 0) results.push(last);\n}\n\nreturn results;"
+      },
+      "id": "clean-data",
+      "name": "Clean & Map Fields",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [580, 380]
+    },
+    {
+      "parameters": {
+        "batchSize": 10,
+        "options": {}
+      },
+      "id": "split-batches",
+      "name": "Split Into Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [800, 380]
+    },
+    {
+      "parameters": {
+        "jsCode": "const products = $input.all().map(i => i.json);\nreturn [{ json: { products } }];"
+      },
+      "id": "aggregate-batch",
+      "name": "Aggregate Batch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1020, 380]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://fastapi:8000/process-batch",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "call-fastapi",
+      "name": "Generate Descriptions (FastAPI)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1240, 380]
+    },
+    {
+      "parameters": {
+        "jsCode": "const batch = $input.first().json;\nif (batch.results) {\n  return batch.results.map(r => ({ json: r }));\n}\nreturn $input.all();"
+      },
+      "id": "flatten-results",
+      "name": "Flatten Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1460, 380]
+    },
+    {
+      "parameters": {
+        "jsCode": "const SHOPIFY_HEADERS = [\n  'Handle','Title','Body (HTML)','Vendor','Product Category',\n  'Type','Tags','Published','Option1 Name','Option1 Value',\n  'Variant SKU','Variant Inventory Qty','Variant Price','Status'\n];\n\nconst rows = [SHOPIFY_HEADERS.join(',')];\nconst errors = [];\n\nfor (const item of $input.all()) {\n  const p = item.json;\n  if (p.error && !p.description) {\n    errors.push(p);\n    continue;\n  }\n  const handle = (p.cleaned_name || p.name).toLowerCase().replace(/[^a-z0-9]+/g, '-');\n  const row = [\n    handle,\n    `\"${(p.cleaned_name || p.name).replace(/\"/g, '\"\"')}\"`,\n    `\"${(p.description || '').replace(/\"/g, '\"\"')}\"`,\n    `\"${p.cleaned_brand || 'Generic'}\"`,\n    `\"${p.cleaned_category || 'Genel Tekstil'}\"`,\n    `\"${p.cleaned_category || 'Genel Tekstil'}\"`,\n    '',\n    'true',\n    'Renk',\n    `\"${p.cleaned_color || 'Standart'}\"`,\n    p.sku,\n    p.cleaned_stock ?? 0,\n    p.price ?? '',\n    'active'\n  ];\n  rows.push(row.join(','));\n\n  if (p.error) errors.push({ sku: p.sku, error: p.error });\n}\n\nreturn [{ json: { csv: rows.join('\\n'), error_report: errors } }];"
+      },
+      "id": "build-shopify-csv",
+      "name": "Build Shopify CSV",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1680, 380]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst csvBuffer = Buffer.from(item.csv, 'utf-8');\nconst timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);\nconst errorBuffer = Buffer.from(JSON.stringify(item.error_report, null, 2), 'utf-8');\n\nreturn [{\n  json: {\n    csv_filename: `shopify_import_${timestamp}.csv`,\n    error_filename: `error_report_${timestamp}.json`,\n    total_products: item.csv.split('\\n').length - 1,\n    total_errors: item.error_report.length,\n  },\n  binary: {\n    shopify_csv: {\n      data: csvBuffer.toString('base64'),\n      mimeType: 'text/csv',\n      fileName: `shopify_import_${timestamp}.csv`,\n    },\n    error_report: {\n      data: errorBuffer.toString('base64'),\n      mimeType: 'application/json',\n      fileName: `error_report_${timestamp}.json`,\n    }\n  }\n}];"
+      },
+      "id": "write-outputs",
+      "name": "Prepare Output Files",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1900, 380]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{ "node": "Parse CSV", "type": "main", "index": 0 }]]
+    },
+    "Webhook Trigger": {
+      "main": [[{ "node": "Parse CSV", "type": "main", "index": 0 }]]
+    },
+    "Parse CSV": {
+      "main": [[{ "node": "Clean & Map Fields", "type": "main", "index": 0 }]]
+    },
+    "Clean & Map Fields": {
+      "main": [[{ "node": "Split Into Batches", "type": "main", "index": 0 }]]
+    },
+    "Split Into Batches": {
+      "main": [[{ "node": "Aggregate Batch", "type": "main", "index": 0 }]]
+    },
+    "Aggregate Batch": {
+      "main": [[{ "node": "Generate Descriptions (FastAPI)", "type": "main", "index": 0 }]]
+    },
+    "Generate Descriptions (FastAPI)": {
+      "main": [[{ "node": "Flatten Results", "type": "main", "index": 0 }]]
+    },
+    "Flatten Results": {
+      "main": [[{ "node": "Build Shopify CSV", "type": "main", "index": 0 }]]
+    },
+    "Build Shopify CSV": {
+      "main": [[{ "node": "Prepare Output Files", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "tags": ["shopify", "import", "ai"]
+}
