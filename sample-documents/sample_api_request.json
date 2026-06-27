@@ -1,0 +1,32 @@
+{
+  "endpoint": "POST /generate-description",
+  "base_url": "http://localhost:8000",
+  "full_url": "http://localhost:8000/generate-description",
+  "headers": {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "X-API-Key": "sk-shopify-importer-demo-key-2024"
+  },
+  "request_body": {
+    "sku": "TXT004",
+    "raw_product_name": "yün battaniye çift kişilik",
+    "category": "battaniye",
+    "brand": "Yataş",
+    "color": "gri",
+    "size": "200x220",
+    "material": "Yün",
+    "price": 675.00,
+    "stock": 25,
+    "raw_description": "Doğal yün battaniye çift kişilik",
+    "options": {
+      "language": "tr",
+      "seo_optimized": true,
+      "output_format": "html",
+      "max_tokens": 600,
+      "include_meta_keywords": true,
+      "tone": "professional"
+    }
+  },
+  "example_curl": "curl -X POST http://localhost:8000/generate-description \\\n  -H 'Content-Type: application/json' \\\n  -H 'X-API-Key: sk-shopify-importer-demo-key-2024' \\\n  -d '{\n    \"sku\": \"TXT004\",\n    \"raw_product_name\": \"yün battaniye çift kişilik\",\n    \"category\": \"battaniye\",\n    \"brand\": \"Yataş\",\n    \"color\": \"gri\",\n    \"size\": \"200x220\",\n    \"material\": \"Yün\",\n    \"price\": 675.00,\n    \"stock\": 25\n  }'",
+  "example_python": "import httpx\n\nresponse = httpx.post(\n    'http://localhost:8000/generate-description',\n    headers={\n        'Content-Type': 'application/json',\n        'X-API-Key': 'sk-shopify-importer-demo-key-2024'\n    },\n    json={\n        'sku': 'TXT004',\n        'raw_product_name': 'yün battaniye çift kişilik',\n        'category': 'battaniye',\n        'brand': 'Yataş',\n        'color': 'gri',\n        'size': '200x220',\n        'material': 'Yün',\n        'price': 675.00,\n        'stock': 25\n    }\n)\nprint(response.json())"
+}

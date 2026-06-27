@@ -5,7 +5,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import anthropic
 
-app = FastAPI(title="Shopify Product Description Generator", version="1.0.0")
+app = FastAPI(title="Shopify Bulk Product Importer", version="1.0.0")
 client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
 ABBREVIATION_MAP = {

@@ -1,0 +1,149 @@
+{
+  "report_metadata": {
+    "generated_at": "2024-11-15T09:42:18Z",
+    "source_file": "supplier_sample.csv",
+    "total_rows_processed": 25,
+    "total_errors_found": 7,
+    "total_warnings_found": 3,
+    "valid_rows": 18,
+    "skipped_rows": 4,
+    "processing_duration_seconds": 2.34
+  },
+  "summary": {
+    "critical": 1,
+    "error": 4,
+    "warning": 5
+  },
+  "errors": [
+    {
+      "id": "ERR-001",
+      "sku": "TXT001",
+      "error": "Duplicate SKU detected",
+      "severity": "error",
+      "row_number": 10,
+      "field": "Stok Kodu",
+      "original_value": "TXT001",
+      "expected_value": "Unique SKU",
+      "suggested_fix": "Row 10 is a duplicate of Row 1 (TXT001). The duplicate row has been automatically skipped. Verify if this is a variant or a data entry error and assign a new unique SKU (e.g., TXT001-B) if this is a distinct product.",
+      "auto_resolved": true,
+      "resolution": "Row skipped — duplicate of row 1"
+    },
+    {
+      "id": "ERR-002",
+      "sku": "TXT011",
+      "error": "Missing required field: Fiyat (Price)",
+      "severity": "error",
+      "row_number": 12,
+      "field": "Fiyat",
+      "original_value": "",
+      "expected_value": "Numeric price > 0",
+      "suggested_fix": "Price is empty for 'keten perde beyaz'. Check the supplier price list or contact the vendor for current pricing. This product cannot be published to Shopify without a valid price.",
+      "auto_resolved": false,
+      "resolution": "Row excluded from Shopify export"
+    },
+    {
+      "id": "ERR-003",
+      "sku": "TXT016",
+      "error": "Missing required field: Ürün Adı (Product Name)",
+      "severity": "error",
+      "row_number": 17,
+      "field": "Ürün Adı",
+      "original_value": "",
+      "expected_value": "Non-empty string",
+      "suggested_fix": "Product name is missing for SKU TXT016. Based on the category 'havlu' and brand 'Mürdüm', a suggested name would be 'Mürdüm El ve Yüz Havlusu 50x90 cm – Turuncu'. Please confirm with the supplier.",
+      "auto_resolved": false,
+      "resolution": "Row excluded from Shopify export"
+    },
+    {
+      "id": "ERR-004",
+      "sku": "TXT022",
+      "error": "Invalid numeric value: Fiyat (Price) is negative",
+      "severity": "critical",
+      "row_number": 23,
+      "field": "Fiyat",
+      "original_value": "-1",
+      "expected_value": "Numeric price >= 0",
+      "suggested_fix": "Price value '-1' is invalid for SKU TXT022 ('çocuk odası halı yıkanabilir'). This is likely a placeholder or data entry error from the supplier system. Verify the actual price and update the record. Negative prices cannot be imported into Shopify.",
+      "auto_resolved": false,
+      "resolution": "Row excluded from Shopify export"
+    },
+    {
+      "id": "ERR-005",
+      "sku": "TXT012",
+      "error": "Missing optional field: Stok (Stock Quantity)",
+      "severity": "warning",
+      "row_number": 13,
+      "field": "Stok",
+      "original_value": "",
+      "expected_value": "Non-negative integer",
+      "suggested_fix": "Stock quantity is missing for TXT012 ('jakarlı nevresim seti'). Product will be imported with stock quantity set to 0 and marked as out-of-stock. Update inventory once confirmed with the supplier.",
+      "auto_resolved": true,
+      "resolution": "Stock quantity defaulted to 0; product imported with 'out of stock' status"
+    },
+    {
+      "id": "ERR-006",
+      "sku": "TXT006",
+      "error": "Invalid field value: Renk (Color) contains a typo",
+      "severity": "warning",
+      "row_number": 6,
+      "field": "Renk",
+      "original_value": "beya",
+      "expected_value": "Valid color name from allowed list",
+      "suggested_fix": "Color value 'beya' does not match any entry in the approved color dictionary. Closest match found: 'beyaz' (confidence: 96%). Auto-corrected to 'beyaz'. Review and confirm this correction is accurate.",
+      "auto_resolved": true,
+      "resolution": "Color auto-corrected from 'beya' to 'beyaz' using fuzzy matching"
+    },
+    {
+      "id": "ERR-007",
+      "sku": "TXT009",
+      "error": "Product name contains spelling error",
+      "severity": "warning",
+      "row_number": 9,
+      "field": "Ürün Adı",
+      "original_value": "bnyo paspasi 50x80",
+      "expected_value": "Correctly spelled product name",
+      "suggested_fix": "Product name 'bnyo paspasi' appears to contain a Turkish spelling error. Auto-corrected to 'Banyo Paspası 50x80 cm'. The Claude AI description generation was performed using the corrected name.",
+      "auto_resolved": true,
+      "resolution": "Product name corrected to 'Banyo Paspası Kaymaz Tabanlı 50x80 cm'"
+    },
+    {
+      "id": "ERR-008",
+      "sku": "TXT019",
+      "error": "Field normalization: Renk (Color) is uppercase",
+      "severity": "warning",
+      "row_number": 20,
+      "field": "Renk",
+      "original_value": "PEMBE",
+      "expected_value": "Title case color value",
+      "suggested_fix": "Color value 'PEMBE' has been normalized to 'Pembe' for consistency in Shopify product tags and variant options.",
+      "auto_resolved": true,
+      "resolution": "Color normalized from 'PEMBE' to 'Pembe'"
+    },
+    {
+      "id": "ERR-009",
+      "sku": "TXT018",
+      "error": "Category inconsistency: 'MUTFAK' should be title-case 'Mutfak'",
+      "severity": "warning",
+      "row_number": 19,
+      "field": "Kategori",
+      "original_value": "MUTFAK",
+      "expected_value": "Title case category name",
+      "suggested_fix": "Category 'MUTFAK' normalized to 'Mutfak'. Mapped to Shopify product category 'Ev Tekstili > Mutfak'.",
+      "auto_resolved": true,
+      "resolution": "Category normalized to 'Mutfak' and mapped to Shopify taxonomy"
+    },
+    {
+      "id": "ERR-010",
+      "sku": "TXT002",
+      "error": "Missing optional field: Marka (Brand)",
+      "severity": "warning",
+      "row_number": 2,
+      "field": "Marka",
+      "original_value": "",
+      "expected_value": "Non-empty brand string",
+      "suggested_fix": "Brand is missing for TXT002 ('akrilik hali 160x230'). A default vendor value of 'Genel' has been assigned. Update with the actual supplier brand name to improve SEO and product credibility on Shopify.",
+      "auto_resolved": true,
+      "resolution": "Vendor set to 'Genel' as fallback"
+    }
+  ]
+}

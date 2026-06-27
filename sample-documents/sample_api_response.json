@@ -1,0 +1,48 @@
+{
+  "status": "success",
+  "request_id": "req_a7f3c2d8-1e45-4b90-a6f2-88c3e5d912ab",
+  "processing_time_ms": 1247,
+  "model_used": "claude-haiku-4-5-20251001",
+  "tokens_used": {
+    "input": 312,
+    "output": 487,
+    "total": 799
+  },
+  "input": {
+    "sku": "TXT004",
+    "raw_product_name": "yün battaniye çift kişilik",
+    "category": "battaniye",
+    "brand": "Yataş",
+    "color": "gri",
+    "size": "200x220",
+    "material": "Yün",
+    "price": 675.00,
+    "stock": 25
+  },
+  "output": {
+    "cleaned_name": "Yün Battaniye Çift Kişilik 200x220 cm – Gri | Yataş",
+    "handle": "yun-battaniye-cift-kisilik-200x220-cm-gri",
+    "cleaned_category": "Battaniye",
+    "shopify_product_category": "Ev Tekstili > Battaniye",
+    "cleaned_color": "Gri",
+    "cleaned_material": "Yün",
+    "tags": ["battaniye", "yün battaniye", "çift kişilik", "gri", "Yataş", "kış", "doğal elyaf"],
+    "description": "<p>Soğuk kış gecelerinde doğanın sıcaklığını hissedin. <strong>Yataş</strong> tarafından üretilen bu <strong>doğal yün battaniye</strong>, nefes alabilen yapısı ve ısı düzenleyici özelliğiyle dört mevsim konfor sağlar.</p><ul><li><strong>Materyal:</strong> %100 Doğal Yün</li><li><strong>Ölçü:</strong> 200x220 cm (Çift Kişilik)</li><li><strong>Renk:</strong> Gri</li><li><strong>Özellik:</strong> Antistatik, nem absorbe edici, hipoalerjenik</li><li><strong>Bakım:</strong> Kuru temizleme önerilir</li></ul><p>Doğal yün elyafı sayesinde hem sıcak hem de serinletici özelliklere sahiptir. Lüks yatak odaları ve kış tatil ürünleri için ideal bir seçimdir.</p>",
+    "seo_meta_title": "Yün Battaniye Çift Kişilik 200x220 cm Gri – Yataş | Doğal Elyaf",
+    "seo_meta_description": "Yataş marka %100 doğal yün, çift kişilik 200x220 cm gri battaniye. Nefes alabilen, hipoalerjenik yapı. Kuru temizleme önerilen premium kalite.",
+    "validation": {
+      "passed": true,
+      "checks": {
+        "description_min_length": true,
+        "html_valid": true,
+        "keywords_present": true,
+        "brand_mentioned": true,
+        "material_mentioned": true,
+        "size_mentioned": true,
+        "color_mentioned": true
+      }
+    },
+    "error": null
+  },
+  "warnings": []
+}

@@ -89,8 +89,8 @@
 - Anthropic API Key → [console.anthropic.com](https://console.anthropic.com)
 
 ```bash
-git clone https://github.com/mustafakavcin/Shopify-bulk-import-automation-with-AI-Turkish-descriptions
-cd Shopify-bulk-import-automation-with-AI-Turkish-descriptions
+git clone https://github.com/mustafakavcin/n8n-Shopify-Bulk-Import
+cd n8n-Shopify-Bulk-Import
 
 cp .env.example .env
 # .env dosyasını aç → ANTHROPIC_API_KEY değerini gir
@@ -216,13 +216,15 @@ Variant Inventory Qty | Variant Price | Status
 ## 📁 Proje Yapısı
 
 ```
-shopify-bulk-importer/
-├── main.py              # FastAPI servisi — Claude entegrasyonu, veri temizleme
-├── workflow.json        # n8n workflow (import edilebilir)
-├── Dockerfile           # FastAPI image
-├── docker-compose.yml   # n8n + FastAPI birlikte
-├── requirements.txt     # Python bağımlılıkları
-└── .env.example         # API key şablonu
+n8n-Shopify-Bulk-Import/
+├── main.py                   # FastAPI servisi — Claude entegrasyonu, veri temizleme
+├── workflow.json              # n8n workflow (import edilebilir)
+├── Dockerfile                 # FastAPI image
+├── docker-compose.yml         # n8n + FastAPI birlikte
+├── requirements.txt           # Python bağımlılıkları
+├── .env.example               # API key şablonu
+├── .gitignore
+└── sample-documents/          # Demo veriler — örnek CSV, JSON ve Markdown
 ```
 
 ---
