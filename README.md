@@ -1,74 +1,125 @@
-# Shopify Bulk Product Importer with AI Descriptions
+# 🛍️ Shopify Bulk Product Importer — AI-Powered Turkish Descriptions
 
-An n8n automation pipeline that takes messy Turkish supplier CSVs, cleans the data, generates SEO-friendly Turkish product descriptions via Claude AI, and outputs a ready-to-import Shopify CSV.
+![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)
+![n8n](https://img.shields.io/badge/n8n-workflow-EA4B71?logo=n8n&logoColor=white)
+![Claude](https://img.shields.io/badge/Claude-Haiku-blueviolet?logo=anthropic&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-## Architecture
+> **Tedarikçi CSV → Veri Temizleme → AI Açıklama → Shopify Import**
+> 
+> Türkçe tedarikçi verilerini alıp otomatik olarak temizleyen, Claude AI ile SEO uyumlu Türkçe ürün açıklamaları üreten ve Shopify'a hazır CSV çıktısı veren tam otomasyon pipeline'ı.
+
+---
+
+## ✨ Özellikler
+
+- 🧹 **Akıllı veri temizleme** — başlık normalizasyonu, kısaltma düzeltme (`1mt → 1m`), renk ve kategori eşleme
+- 🤖 **AI açıklama üretimi** — Claude Haiku ile SEO uyumlu, 2-3 cümlelik Türkçe ürün açıklamaları
+- ⚡ **Toplu işleme** — 500 ürüne kadar batch desteği, otomatik SKU deduplikasyonu
+- 🔁 **Görsel otomasyon** — n8n workflow ile her adım izlenebilir ve düzenlenebilir
+- 📋 **Hata raporu** — eksik fiyat, geçersiz alan ve API hatalarını ayrı JSON'a yazar
+- 🐳 **Tek komutla ayağa kalkar** — Docker Compose ile n8n + FastAPI birlikte çalışır
+
+---
+
+## 🏗️ Mimari
 
 ```
-Webhook / Manual Trigger
-        ↓
-   Parse CSV
-        ↓
- Clean & Map Fields     ← title normalization, abbreviation fixes (1mt→1m),
-        ↓                  category mapping, stock/brand defaults, color normalization
-Split Into Batches (10)
-        ↓
-  FastAPI Service       ← POST /process-batch
-        ↓                  SKU deduplication, price validation
-  Claude Haiku API      ← Turkish SEO descriptions (2-3 sentences)
-        ↓
-  Build Shopify CSV     ← Shopify-compatible column schema
-        ↓
- Error Report JSON      ← Invalid price, missing fields, API errors
+┌─────────────────────────────────────────────────────────┐
+│                        n8n UI                           │
+│                  localhost:5678                         │
+└───────────────────────┬─────────────────────────────────┘
+                        │
+          ┌─────────────▼──────────────┐
+          │     Webhook / Manual       │
+          │         Trigger            │
+          └─────────────┬──────────────┘
+                        │
+          ┌─────────────▼──────────────┐
+          │         Parse CSV          │  ← binary upload veya test data
+          └─────────────┬──────────────┘
+                        │
+          ┌─────────────▼──────────────┐
+          │    Clean & Map Fields      │  ← Türkçe sütun mapping
+          │                            │     başlık normalizasyonu
+          │                            │     renk / kategori eşleme
+          └─────────────┬──────────────┘
+                        │
+          ┌─────────────▼──────────────┐
+          │    Split Into Batches      │  ← 10'arlı gruplar
+          └─────────────┬──────────────┘
+                        │
+          ┌─────────────▼──────────────┐
+          │       FastAPI Service      │  ← localhost:8000
+          │    POST /process-batch     │     SKU deduplikasyon
+          │                            │     fiyat validasyonu
+          └─────────────┬──────────────┘
+                        │
+          ┌─────────────▼──────────────┐
+          │      Claude Haiku API      │  ← Türkçe SEO açıklama
+          │   claude-haiku-4-5-...     │     2-3 cümle / ürün
+          └─────────────┬──────────────┘
+                        │
+          ┌─────────────▼──────────────┐
+          │      Build Shopify CSV     │  ← Shopify column schema
+          └──────┬──────────────┬──────┘
+                 │              │
+    ┌────────────▼───┐   ┌──────▼──────────┐
+    │  shopify.csv   │   │ error_report.json│
+    │  (import ready)│   │ (hatalı ürünler) │
+    └────────────────┘   └─────────────────┘
 ```
 
-## How It Works
+---
 
-**n8n** acts as the visual orchestrator — it provides the UI for uploading CSVs, chains each processing step as a node, handles retries, and can be triggered manually or via webhook from an external system (e.g. Shopify, a form, a scheduler).
+## 🔄 n8n ve FastAPI Nasıl Birlikte Çalışır?
 
-**FastAPI** handles the AI logic that would be messy inside n8n's Code nodes: it deduplicates SKUs, validates prices, cleans Turkish field values, and calls the Claude Haiku API to generate 2-3 sentence SEO descriptions in Turkish.
+**n8n** — görsel orkestratör. CSV upload için UI sağlar, her adımı node olarak zincirler, retry ve hata yönetimini üstlenir. Manuel tetiklenebilir ya da webhook ile dış sistemlerden (Shopify, form, scheduler) çağrılabilir.
 
-The two services run together via Docker Compose and communicate over an internal network — n8n's HTTP Request node posts batches of 10 products to FastAPI, collects the enriched results, and assembles the final Shopify CSV.
+**FastAPI** — AI mantık katmanı. SKU deduplikasyonu, fiyat validasyonu, Türkçe alan temizleme ve Claude Haiku API entegrasyonunu yönetir. n8n'in HTTP Request node'u her batch'i buraya POST eder, zenginleştirilmiş sonuçları alır.
 
-## Tech Stack
+---
 
-| Layer | Tool |
-|---|---|
-| Workflow automation | [n8n](https://n8n.io) |
-| AI descriptions | [Anthropic Claude Haiku](https://www.anthropic.com) |
-| Microservice | FastAPI (Python 3.12) |
-| Containerization | Docker + Docker Compose |
+## 🚀 Kurulum
 
-## Quick Start
+### Gereksinimler
+- Docker & Docker Compose
+- Anthropic API Key → [console.anthropic.com](https://console.anthropic.com)
 
 ```bash
-git clone <repo>
-cd shopify-bulk-importer
+git clone https://github.com/mustafakavcin/Shopify-bulk-import-automation-with-AI-Turkish-descriptions
+cd Shopify-bulk-import-automation-with-AI-Turkish-descriptions
 
 cp .env.example .env
-# edit .env → set ANTHROPIC_API_KEY
+# .env dosyasını aç → ANTHROPIC_API_KEY değerini gir
 
 docker compose up --build
 ```
 
-- **n8n UI:** http://localhost:5678
-- **FastAPI docs:** http://localhost:8000/docs
+| Servis | URL |
+|---|---|
+| n8n UI | http://localhost:5678 |
+| FastAPI Docs | http://localhost:8000/docs |
 
-### Import the Workflow
+### Workflow Import
 
-1. Open n8n → Settings → **Import Workflow**
-2. Select `workflow.json`
-3. Click **Execute** to test with built-in sample data
+1. n8n UI → sağ üst → **Settings → Import Workflow**
+2. `workflow.json` dosyasını seç
+3. **Execute** — dahili örnek veriyle test çalışır
 
-## FastAPI Endpoints
+---
+
+## 📡 FastAPI Endpoints
 
 ### `POST /generate-description`
-Generate a description for a single product.
+Tek ürün için açıklama üretir.
 
 ```json
 {
   "sku": "TXT-001",
-  "name": "pamuk yatak ortüsü 1mt",
+  "name": "pamuk yatak örtüsü 1mt",
   "category": "yatak",
   "brand": "ÖRNEK",
   "price": 250.0,
@@ -79,52 +130,103 @@ Generate a description for a single product.
 }
 ```
 
+**Response:**
+```json
+{
+  "sku": "TXT-001",
+  "description": "Doğal pamuktan üretilen bu yatak örtüsü...",
+  "cleaned_name": "Pamuk Yatak Örtüsü 1m",
+  "cleaned_category": "Yatak Örtüleri",
+  "cleaned_color": "Beyaz",
+  "error": null
+}
+```
+
 ### `POST /process-batch`
-Process up to 500 products at once with automatic SKU deduplication.
+500 ürüne kadar toplu işleme, otomatik SKU deduplikasyonu.
 
 ```json
 { "products": [ ...ProductInput ] }
 ```
 
 ### `GET /health`
+```json
+{ "status": "ok" }
+```
 
-## Supplier CSV Format
+---
 
-The pipeline expects a Turkish-language CSV with these columns (`Stok Kodu` and `Ürün Adı` are required, rest optional):
+## 📥 Tedarikçi CSV Formatı
 
-| Turkish Column | Maps To |
+`Stok Kodu` ve `Ürün Adı` zorunlu, diğerleri opsiyonel:
+
+| Türkçe Sütun | İç Alan |
 |---|---|
-| Stok Kodu | sku |
-| Ürün Adı | name |
-| Kategori | category |
-| Marka | brand |
-| Fiyat | price |
-| Stok | stock |
-| Renk | color |
-| Boyut | size |
-| Malzeme | material |
-| Açıklama | extra_info |
+| Stok Kodu | `sku` |
+| Ürün Adı | `name` |
+| Kategori | `category` |
+| Marka | `brand` |
+| Fiyat | `price` |
+| Stok | `stock` |
+| Renk | `color` |
+| Boyut | `size` |
+| Malzeme | `material` |
+| Açıklama | `extra_info` |
 
-## Data Cleaning Rules
+---
 
-- **Title normalization:** Title Case, abbreviations fixed (`1mt → 1m`, `kq → kg`, `lt → L`)
-- **Category mapping:** Turkish keywords auto-mapped (e.g. `hali → Halılar & Kilimler`)
-- **Brand:** Defaults to `Generic` if missing
-- **Stock:** Defaults to `0` if missing
-- **Color:** Normalized to standard Turkish color names
-- **Price:** Rows with missing/zero price are flagged in the error report
-- **SKU deduplication:** First occurrence wins; duplicates are silently dropped
+## 🧹 Veri Temizleme Kuralları
 
-## Shopify Output Columns
+| Kural | Detay |
+|---|---|
+| Başlık normalizasyonu | Title Case, `1mt → 1m`, `kq → kg`, `lt → L` |
+| Kategori mapping | `hali → Halılar & Kilimler`, `nevresim → Nevresim Takımları` vb. |
+| Marka | Boşsa `Generic` |
+| Stok | Boşsa `0` |
+| Renk | Standart Türkçe renk adlarına normalize edilir |
+| Fiyat | Eksik veya `0` ise error report'a düşer |
+| SKU deduplikasyon | İlk kayıt korunur, tekrarlar silinir |
 
-`Handle, Title, Body (HTML), Vendor, Product Category, Type, Tags, Published, Option1 Name, Option1 Value, Variant SKU, Variant Inventory Qty, Variant Price, Status`
+---
 
-## Environment Variables
+## 📤 Shopify Çıktı Kolonları
 
-See `.env.example` for the full list.
+```
+Handle | Title | Body (HTML) | Vendor | Product Category | Type | Tags |
+Published | Option1 Name | Option1 Value | Variant SKU |
+Variant Inventory Qty | Variant Price | Status
+```
 
-| Variable | Required | Description |
+---
+
+## ⚙️ Ortam Değişkenleri
+
+`.env.example` dosyasını kopyalayın:
+
+| Değişken | Zorunlu | Açıklama |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | ✅ | Claude API key |
-| `N8N_HOST` | — | Defaults to `localhost` |
-| `N8N_BASIC_AUTH_ACTIVE` | — | Enable n8n login (default: false) |
+| `ANTHROPIC_API_KEY` | ✅ | Claude API anahtarı |
+| `N8N_HOST` | — | Varsayılan: `localhost` |
+| `N8N_BASIC_AUTH_ACTIVE` | — | n8n giriş ekranı (varsayılan: kapalı) |
+| `N8N_BASIC_AUTH_USER` | — | Kullanıcı adı |
+| `N8N_BASIC_AUTH_PASSWORD` | — | Şifre |
+
+---
+
+## 📁 Proje Yapısı
+
+```
+shopify-bulk-importer/
+├── main.py              # FastAPI servisi — Claude entegrasyonu, veri temizleme
+├── workflow.json        # n8n workflow (import edilebilir)
+├── Dockerfile           # FastAPI image
+├── docker-compose.yml   # n8n + FastAPI birlikte
+├── requirements.txt     # Python bağımlılıkları
+└── .env.example         # API key şablonu
+```
+
+---
+
+## 📄 Lisans
+
+MIT
