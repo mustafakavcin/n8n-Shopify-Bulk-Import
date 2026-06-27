@@ -22,6 +22,14 @@ Split Into Batches (10)
  Error Report JSON      ← Invalid price, missing fields, API errors
 ```
 
+## How It Works
+
+**n8n** acts as the visual orchestrator — it provides the UI for uploading CSVs, chains each processing step as a node, handles retries, and can be triggered manually or via webhook from an external system (e.g. Shopify, a form, a scheduler).
+
+**FastAPI** handles the AI logic that would be messy inside n8n's Code nodes: it deduplicates SKUs, validates prices, cleans Turkish field values, and calls the Claude Haiku API to generate 2-3 sentence SEO descriptions in Turkish.
+
+The two services run together via Docker Compose and communicate over an internal network — n8n's HTTP Request node posts batches of 10 products to FastAPI, collects the enriched results, and assembles the final Shopify CSV.
+
 ## Tech Stack
 
 | Layer | Tool |
